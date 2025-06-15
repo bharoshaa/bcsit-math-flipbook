@@ -219,36 +219,42 @@
     zoomLevel.textContent = `${Math.round(currentScale * 100)}%`;
   }
 
+  function getPageImagePath(pageIndex, isRight) {
+    if (pageIndex < 42) {
+      // Single page
+      // For single pages, even numbers go to left zoom, odd numbers go to right zoom
+      const isEvenPage = pageIndex % 2 === 0;
+      if ((isRight && !isEvenPage) || (!isRight && isEvenPage)) {
+        return pages[pageIndex];
+      }
+      return null; // Return null if trying to zoom wrong side
+    } else {
+      // Double page spread
+      const spreadIndex = Math.floor((pageIndex - 42) / 2);
+      const basePageNumber = 42 + (spreadIndex * 2);
+      return `images/page${basePageNumber}_row-1-column-${isRight ? '2' : '1'}.jpg`;
+    }
+  }
+
   function zoomPage(isRight = false) {
     const currentPage = pageFlip.getCurrentPage();
     if (!currentPage) return;
 
-    // Get the current page's image
-    const currentImage = currentPage.querySelector('img');
-    if (!currentImage) return;
-
     // Get the current page index
     currentPageIndex = pageFlip.getCurrentPageIndex();
     isRightPage = isRight;
-    
-    // For double-page spreads, determine which side we're on
-    if (currentPageIndex >= 42) {
-      // Calculate the base page number for the spread
-      const spreadIndex = Math.floor((currentPageIndex - 42) / 2);
-      const basePageNumber = 42 + (spreadIndex * 2);
-      
-      // Use the specified page (left or right)
-      const imagePath = `images/page${basePageNumber}_row-1-column-${isRightPage ? '2' : '1'}.jpg`;
-      zoomedImage.src = imagePath;
-    } else {
-      // Single page
-      zoomedImage.src = pages[currentPageIndex];
-    }
 
-    currentScale = 1;
-    zoomedImage.style.transform = `scale(${currentScale})`;
-    updateZoomLevel();
-    zoomModal.style.display = "flex";
+    // Get the appropriate image path
+    const imagePath = getPageImagePath(currentPageIndex, isRight);
+    
+    // Only zoom if we have a valid image path
+    if (imagePath) {
+      zoomedImage.src = imagePath;
+      currentScale = 1;
+      zoomedImage.style.transform = `scale(${currentScale})`;
+      updateZoomLevel();
+      zoomModal.style.display = "flex";
+    }
   }
 
   // Zoom button clicks
