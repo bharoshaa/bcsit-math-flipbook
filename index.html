@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <title>Simple Flipbook</title>
+
+  <!--  Allow mobile zoom -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- PageFlip CSS -->
   <link rel="stylesheet" href="https://unpkg.com/page-flip/dist/css/page-flip.min.css" />
+
   <style>
     body {
       margin: 0;
@@ -24,8 +30,11 @@
 <body>
 
 <div id="bookContainer"></div>
+
+<!-- Flip Sound -->
 <audio id="flipSound" src="flip.mp3" preload="auto"></audio>
 
+<!-- PageFlip JS -->
 <script src="https://unpkg.com/page-flip"></script>
 <script>
   const bookContainer = document.getElementById("bookContainer");
@@ -40,20 +49,21 @@
 
   const pages = [];
 
-  // Single pages (page1.jpg to page42.jpg)
+  // 📄 Single pages: page0.jpg to page41.jpg
   for (let i = 0; i <= 41; i++) {
     pages.push(`images/page${i}.jpg`);
   }
 
-  // Double-page spreads (even pages with two columns)
+  // 📖 Double-page spreads: page42_row-1-column-1.jpg to page276_row-1-column-2.jpg
   for (let even = 42; even <= 276; even += 2) {
     pages.push(`images/page${even}_row-1-column-1.jpg`);
     pages.push(`images/page${even}_row-1-column-2.jpg`);
   }
 
+  // Load pages
   pageFlip.loadFromImages(pages);
 
-  // Flip sound only
+  // Play sound on flip
   pageFlip.on("flip", () => {
     document.getElementById("flipSound").play();
   });
