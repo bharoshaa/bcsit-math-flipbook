@@ -2,26 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Simple Flipbook</title>
-
-  <!-- ✅ Allow mobile zoom -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- PageFlip CSS -->
+  <title>Simple Flipbook with Zoom</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <link rel="stylesheet" href="https://unpkg.com/page-flip/dist/css/page-flip.min.css" />
-
   <style>
-    html, body {
+    body {
       margin: 0;
-      padding: 0;
       background: #f0f0f0;
-      touch-action: pan-x pan-y; /* ✅ allow pinch & scroll */
-      overscroll-behavior: contain;
+      font-family: sans-serif;
+      overflow: hidden;
     }
 
     #bookContainer {
-      max-width: 100%;
-      max-height: 100vh;
+      width: 90vw;
+      height: 90vh;
       margin: auto;
     }
 
@@ -30,54 +24,100 @@
       height: 100%;
       object-fit: cover;
     }
+
+    /* Zoom Button */
+    #zoomBtn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      background-color: #333;
+      color: #fff;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* Fullscreen Zoom Modal */
+    #zoomModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+    }
+
+    #zoomModal img {
+      max-width: 100%;
+      max-height: 100%;
+      touch-action: pinch-zoom;
+    }
   </style>
 </head>
 <body>
 
+<!-- Flipbook Container -->
 <div id="bookContainer"></div>
+
+<!-- Zoom Button -->
+<button id="zoomBtn">Zoom Page</button>
 
 <!-- Flip Sound -->
 <audio id="flipSound" src="flip.mp3" preload="auto"></audio>
 
-<!-- PageFlip JS -->
+<!-- Zoom Modal -->
+<div id="zoomModal" onclick="this.style.display='none'">
+  <img id="zoomedImage" src="" alt="Zoomed Page" />
+</div>
+
 <script src="https://unpkg.com/page-flip"></script>
 <script>
   const bookContainer = document.getElementById("bookContainer");
+  const zoomBtn = document.getElementById("zoomBtn");
+  const zoomModal = document.getElementById("zoomModal");
+  const zoomedImage = document.getElementById("zoomedImage");
 
   const pageFlip = new St.PageFlip(bookContainer, {
     width: 500,
     height: 700,
     size: "stretch",
     showCover: false,
-    mobileScrollSupport: false  // ✅ allow pinch zoom gestures
+    mobileScrollSupport: true,
   });
 
   const pages = [];
 
-  // 📄 Single pages: page0.jpg to page41.jpg
+  // Single pages (0–41)
   for (let i = 0; i <= 41; i++) {
     pages.push(`images/page${i}.jpg`);
   }
 
-  // 📖 Double-page spreads: page42_row-1-column-1.jpg to page276_row-1-column-2.jpg
+  // Double page spreads
   for (let even = 42; even <= 276; even += 2) {
     pages.push(`images/page${even}_row-1-column-1.jpg`);
     pages.push(`images/page${even}_row-1-column-2.jpg`);
   }
 
-  // Load pages
   pageFlip.loadFromImages(pages);
 
-  // Play sound on flip
+  // Flip sound
   pageFlip.on("flip", () => {
     document.getElementById("flipSound").play();
   });
-</script>
 
-<!-- ✅ Fix for some Safari zoom gesture issues -->
-<script>
-  document.addEventListener('gesturestart', function (e) {
-    e.preventDefault();
+  // Zoom button click
+  zoomBtn.addEventListener("click", () => {
+    const currentPageIndex = pageFlip.getCurrentPageIndex();
+    const currentImage = pages[currentPageIndex];
+    zoomedImage.src = currentImage;
+    zoomModal.style.display = "flex";
   });
 </script>
 
