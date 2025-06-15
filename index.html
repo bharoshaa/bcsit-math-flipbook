@@ -222,12 +222,7 @@
   function getPageImagePath(pageIndex, isRight) {
     if (pageIndex < 42) {
       // Single page
-      // For single pages, even numbers go to left zoom, odd numbers go to right zoom
-      const isEvenPage = pageIndex % 2 === 0;
-      if ((isRight && !isEvenPage) || (!isRight && isEvenPage)) {
-        return pages[pageIndex];
-      }
-      return null; // Return null if trying to zoom wrong side
+      return pages[pageIndex];
     } else {
       // Double page spread
       const spreadIndex = Math.floor((pageIndex - 42) / 2);
@@ -246,15 +241,11 @@
 
     // Get the appropriate image path
     const imagePath = getPageImagePath(currentPageIndex, isRight);
-    
-    // Only zoom if we have a valid image path
-    if (imagePath) {
-      zoomedImage.src = imagePath;
-      currentScale = 1;
-      zoomedImage.style.transform = `scale(${currentScale})`;
-      updateZoomLevel();
-      zoomModal.style.display = "flex";
-    }
+    zoomedImage.src = imagePath;
+    currentScale = 1;
+    zoomedImage.style.transform = `scale(${currentScale})`;
+    updateZoomLevel();
+    zoomModal.style.display = "flex";
   }
 
   // Zoom button clicks
