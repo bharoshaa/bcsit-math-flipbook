@@ -4,22 +4,27 @@
   <meta charset="UTF-8" />
   <title>Simple Flipbook</title>
 
-  <!--  Allow mobile zoom -->
+  <!-- ✅ Allow mobile zoom -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- PageFlip CSS -->
   <link rel="stylesheet" href="https://unpkg.com/page-flip/dist/css/page-flip.min.css" />
 
   <style>
-    body {
+    html, body {
       margin: 0;
+      padding: 0;
       background: #f0f0f0;
+      touch-action: pan-x pan-y; /* ✅ allow pinch & scroll */
+      overscroll-behavior: contain;
     }
+
     #bookContainer {
-      width: 90vw;
-      height: 90vh;
+      max-width: 100%;
+      max-height: 100vh;
       margin: auto;
     }
+
     .page img {
       width: 100%;
       height: 100%;
@@ -44,7 +49,7 @@
     height: 700,
     size: "stretch",
     showCover: false,
-    mobileScrollSupport: true
+    mobileScrollSupport: false  // ✅ allow pinch zoom gestures
   });
 
   const pages = [];
@@ -66,6 +71,13 @@
   // Play sound on flip
   pageFlip.on("flip", () => {
     document.getElementById("flipSound").play();
+  });
+</script>
+
+<!-- ✅ Fix for some Safari zoom gesture issues -->
+<script>
+  document.addEventListener('gesturestart', function (e) {
+    e.preventDefault();
   });
 </script>
 
