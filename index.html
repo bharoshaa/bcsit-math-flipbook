@@ -19,11 +19,14 @@
       margin: auto;
     }
 
-    .page img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+   .page img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
+  image-rendering: crisp-edges;
+  image-rendering: high-quality;
+}
 
     /* Zoom Button */
     #zoomBtn {
@@ -84,13 +87,25 @@
   const zoomModal = document.getElementById("zoomModal");
   const zoomedImage = document.getElementById("zoomedImage");
 
-  const pageFlip = new St.PageFlip(bookContainer, {
-    width: 500,
-    height: 700,
-    size: "stretch",
-    showCover: false,
-    mobileScrollSupport: true,
-  });
+const pageFlip = new St.PageFlip(bookContainer, {
+  width: 500,
+  height: 700,
+  size: "stretch",
+  showCover: false,
+  mobileScrollSupport: true,
+  useMouseEvents: true,
+  usePortrait: false,
+  maxShadowOpacity: 0.5,
+  showPageCorners: true,
+  drawShadow: true,
+  flippingTime: 600,
+  disableFlipByClick: false,
+  startPage: 0,
+  swipeDistance: 30,
+  autoSize: true,
+  render: 'hard' // 👈 improves clarity on retina displays
+});
+
 
   const pages = [];
 
