@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simple Flipbook</title>
+  <link rel="stylesheet" href="https://unpkg.com/page-flip/dist/css/page-flip.min.css" />
+  <style>
+    body {
+      margin: 0;
+      background: #f0f0f0;
+    }
+    #bookContainer {
+      width: 90vw;
+      height: 90vh;
+      margin: auto;
+    }
+    .page img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body>
+
+<div id="bookContainer"></div>
+<audio id="flipSound" src="flip.mp3" preload="auto"></audio>
+
+<script src="https://unpkg.com/page-flip"></script>
+<script>
+  const bookContainer = document.getElementById("bookContainer");
+
+  const pageFlip = new St.PageFlip(bookContainer, {
+    width: 500,
+    height: 700,
+    size: "stretch",
+    showCover: false,
+    mobileScrollSupport: true
+  });
+
+  const pages = [];
+
+  // Single pages (page1.jpg to page42.jpg)
+  for (let i = 0; i <= 41; i++) {
+    pages.push(`images/page${i}.jpg`);
+  }
+
+  // Double-page spreads (even pages with two columns)
+  for (let even = 42; even <= 276; even += 2) {
+    pages.push(`images/page${even}_row-1-column-1.jpg`);
+    pages.push(`images/page${even}_row-1-column-2.jpg`);
+  }
+
+  pageFlip.loadFromImages(pages);
+
+  // Flip sound only
+  pageFlip.on("flip", () => {
+    document.getElementById("flipSound").play();
+  });
+</script>
+
+</body>
+</html>
