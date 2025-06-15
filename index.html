@@ -19,21 +19,26 @@
       margin: auto;
     }
 
-   .page img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  image-rendering: auto;
-  image-rendering: crisp-edges;
-  image-rendering: high-quality;
-}
+    .page img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      image-rendering: auto;
+      image-rendering: crisp-edges;
+      image-rendering: high-quality;
+    }
 
-    /* Zoom Button */
-    #zoomBtn {
+    /* Zoom Controls */
+    .zoom-controls {
       position: fixed;
       top: 10px;
       right: 10px;
       z-index: 1000;
+      display: flex;
+      gap: 8px;
+    }
+
+    .zoom-btn {
       background-color: #333;
       color: #fff;
       padding: 10px 16px;
@@ -41,6 +46,10 @@
       border-radius: 6px;
       font-size: 14px;
       cursor: pointer;
+    }
+
+    .zoom-btn:hover {
+      background-color: #444;
     }
 
     /* Fullscreen Zoom Modal */
@@ -61,6 +70,66 @@
       max-width: 100%;
       max-height: 100%;
       touch-action: pinch-zoom;
+      transform-origin: center center;
+      transition: transform 0.1s ease-out;
+    }
+
+    #closeZoomBtn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 1001;
+      padding: 8px 12px;
+      font-size: 14px;
+      border: none;
+      background: #fff;
+      color: #000;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #closeZoomBtn:hover {
+      background: #f0f0f0;
+    }
+
+    /* Zoom Modal Controls */
+    .zoom-modal-controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1001;
+      display: flex;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 8px;
+      border-radius: 8px;
+    }
+
+    .zoom-modal-btn {
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      min-width: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .zoom-modal-btn:hover {
+      background: #f0f0f0;
+    }
+
+    .zoom-level {
+      color: #fff;
+      padding: 8px 12px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
     }
   </style>
 </head>
@@ -69,43 +138,56 @@
 <!-- Flipbook Container -->
 <div id="bookContainer"></div>
 
-<!-- Zoom Button -->
-<button id="zoomBtn">Zoom Page</button>
+<!-- Zoom Controls -->
+<div class="zoom-controls">
+  <button class="zoom-btn" id="zoomLeftBtn">Zoom Left</button>
+  <button class="zoom-btn" id="zoomRightBtn">Zoom Right</button>
+</div>
 
 <!-- Flip Sound -->
 <audio id="flipSound" src="flip.mp3" preload="auto"></audio>
 
 <!-- Zoom Modal -->
-<div id="zoomModal" onclick="this.style.display='none'">
+<div id="zoomModal">
+  <button id="closeZoomBtn" onclick="zoomModal.style.display='none'">Close</button>
   <img id="zoomedImage" src="" alt="Zoomed Page" />
+  <div class="zoom-modal-controls">
+    <button class="zoom-modal-btn" id="zoomOutBtn">-</button>
+    <div class="zoom-level" id="zoomLevel">100%</div>
+    <button class="zoom-modal-btn" id="zoomInBtn">+</button>
+  </div>
 </div>
 
 <script src="https://unpkg.com/page-flip"></script>
 <script>
   const bookContainer = document.getElementById("bookContainer");
-  const zoomBtn = document.getElementById("zoomBtn");
+  const zoomLeftBtn = document.getElementById("zoomLeftBtn");
+  const zoomRightBtn = document.getElementById("zoomRightBtn");
   const zoomModal = document.getElementById("zoomModal");
   const zoomedImage = document.getElementById("zoomedImage");
+  const closeZoomBtn = document.getElementById("closeZoomBtn");
+  const zoomInBtn = document.getElementById("zoomInBtn");
+  const zoomOutBtn = document.getElementById("zoomOutBtn");
+  const zoomLevel = document.getElementById("zoomLevel");
 
-const pageFlip = new St.PageFlip(bookContainer, {
-  width: 500,
-  height: 700,
-  size: "stretch",
-  showCover: false,
-  mobileScrollSupport: true,
-  useMouseEvents: true,
-  usePortrait: false,
-  maxShadowOpacity: 0.5,
-  showPageCorners: true,
-  drawShadow: true,
-  flippingTime: 600,
-  disableFlipByClick: false,
-  startPage: 0,
-  swipeDistance: 30,
-  autoSize: true,
-  render: 'hard' // 👈 improves clarity on retina displays
-});
-
+  const pageFlip = new St.PageFlip(bookContainer, {
+    width: 500,
+    height: 700,
+    size: "stretch",
+    showCover: false,
+    mobileScrollSupport: true,
+    useMouseEvents: true,
+    usePortrait: false,
+    maxShadowOpacity: 0.5,
+    showPageCorners: true,
+    drawShadow: true,
+    flippingTime: 600,
+    disableFlipByClick: false,
+    startPage: 0,
+    swipeDistance: 30,
+    autoSize: true,
+    render: 'hard'
+  });
 
   const pages = [];
 
@@ -127,12 +209,152 @@ const pageFlip = new St.PageFlip(bookContainer, {
     document.getElementById("flipSound").play();
   });
 
-  // Zoom button click
-  zoomBtn.addEventListener("click", () => {
-    const currentPageIndex = pageFlip.getCurrentPageIndex();
-    const currentImage = pages[currentPageIndex];
-    zoomedImage.src = currentImage;
+  // Zoom functionality
+  let currentScale = 1;
+  let startDistance = 0;
+  let currentPageIndex = 0;
+  let isRightPage = false;
+
+  function updateZoomLevel() {
+    zoomLevel.textContent = `${Math.round(currentScale * 100)}%`;
+  }
+
+  function zoomPage(isRight = false) {
+    const currentPage = pageFlip.getCurrentPage();
+    if (!currentPage) return;
+
+    // Get the current page's image
+    const currentImage = currentPage.querySelector('img');
+    if (!currentImage) return;
+
+    // Get the current page index
+    currentPageIndex = pageFlip.getCurrentPageIndex();
+    isRightPage = isRight;
+    
+    // For double-page spreads, determine which side we're on
+    if (currentPageIndex >= 42) {
+      // Calculate the base page number for the spread
+      const spreadIndex = Math.floor((currentPageIndex - 42) / 2);
+      const basePageNumber = 42 + (spreadIndex * 2);
+      
+      // Use the specified page (left or right)
+      const imagePath = `images/page${basePageNumber}_row-1-column-${isRightPage ? '2' : '1'}.jpg`;
+      zoomedImage.src = imagePath;
+    } else {
+      // Single page
+      zoomedImage.src = pages[currentPageIndex];
+    }
+
+    currentScale = 1;
+    zoomedImage.style.transform = `scale(${currentScale})`;
+    updateZoomLevel();
     zoomModal.style.display = "flex";
+  }
+
+  // Zoom button clicks
+  zoomLeftBtn.addEventListener("click", () => zoomPage(false));
+  zoomRightBtn.addEventListener("click", () => zoomPage(true));
+
+  // Zoom in/out buttons
+  zoomInBtn.addEventListener("click", () => {
+    currentScale = Math.min(3, currentScale + 0.2);
+    zoomedImage.style.transform = `scale(${currentScale})`;
+    updateZoomLevel();
+  });
+
+  zoomOutBtn.addEventListener("click", () => {
+    currentScale = Math.max(1, currentScale - 0.2);
+    zoomedImage.style.transform = `scale(${currentScale})`;
+    updateZoomLevel();
+  });
+
+  // Close button click
+  closeZoomBtn.addEventListener("click", () => {
+    zoomModal.style.display = "none";
+    currentScale = 1;
+  });
+
+  // Swipe navigation
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  zoomedImage.addEventListener("touchstart", (e) => {
+    touchStartX = e.touches[0].clientX;
+  });
+
+  zoomedImage.addEventListener("touchend", (e) => {
+    touchEndX = e.changedTouches[0].clientX;
+    handleSwipe();
+  });
+
+  function handleSwipe() {
+    const swipeThreshold = 50;
+    const diff = touchStartX - touchEndX;
+
+    if (Math.abs(diff) < swipeThreshold) return;
+
+    if (diff > 0) {
+      // Swipe left - go to next page
+      if (currentPageIndex < pages.length - 1) {
+        currentPageIndex++;
+        zoomPage(isRightPage);
+      }
+    } else {
+      // Swipe right - go to previous page
+      if (currentPageIndex > 0) {
+        currentPageIndex--;
+        zoomPage(isRightPage);
+      }
+    }
+  }
+
+  // Pinch to zoom
+  function getDistance(touch1, touch2) {
+    const dx = touch2.clientX - touch1.clientX;
+    const dy = touch2.clientY - touch1.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  zoomedImage.addEventListener("touchstart", (e) => {
+    if (e.touches.length === 2) {
+      startDistance = getDistance(e.touches[0], e.touches[1]);
+    }
+  });
+
+  zoomedImage.addEventListener("touchmove", (e) => {
+    if (e.touches.length === 2) {
+      const currentDistance = getDistance(e.touches[0], e.touches[1]);
+      const newScale = Math.min(3, Math.max(1, currentScale * (currentDistance / startDistance)));
+      currentScale = newScale;
+      zoomedImage.style.transform = `scale(${currentScale})`;
+      updateZoomLevel();
+    }
+  });
+
+  zoomedImage.addEventListener("touchend", (e) => {
+    if (e.touches.length < 2) {
+      currentScale = parseFloat(zoomedImage.style.transform.replace("scale(", "").replace(")", "")) || 1;
+      updateZoomLevel();
+    }
+  });
+
+  // Double tap to zoom
+  let lastTap = 0;
+  zoomedImage.addEventListener("click", (e) => {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTap;
+    
+    if (tapLength < 300 && tapLength > 0) {
+      if (currentScale === 1) {
+        currentScale = 2;
+      } else {
+        currentScale = 1;
+      }
+      zoomedImage.style.transform = `scale(${currentScale})`;
+      updateZoomLevel();
+    }
+    
+    lastTap = currentTime;
   });
 </script>
 
